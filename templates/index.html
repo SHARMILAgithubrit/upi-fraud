@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Fraud URL Detector</title>
+    <style>
+        :root {
+            --light-green: #e8f5e9;
+            --dark-green: #2e7d32;
+            --white: #ffffff;
+            --black: #333333;
+            --red: #c62828;
+            --blue: #1565c0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--black);
+        }
+        
+        .container {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 2px solid var(--light-green);
+            transition: all 0.3s ease;
+        }
+        
+        .container:hover {
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+            border-color: #c8e6c9;
+        }
+        
+        h1 {
+            color: var(--dark-green);
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark-green);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid var(--light-green);
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+            box-sizing: border-box;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--dark-green);
+        }
+        
+        button {
+            background-color: var(--dark-green);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1b5e20;
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .genuine {
+            background-color: #e8f5e9;
+            color: var(--dark-green);
+            border: 2px solid #a5d6a7;
+        }
+        
+        .fraud {
+            background-color: #ffebee;
+            color: var(--red);
+            border: 2px solid #ef9a9a;
+        }
+        
+        .error {
+            color: var(--red);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--dark-green);
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>UPI Fraud URL Detector</h1>
+        
+        <div class="input-group">
+            <label for="url">Enter URL to check:</label>
+            <input type="text" id="url" placeholder="https://example.com/upi/payment">
+            <div id="error" class="error"></div>
+        </div>
+        
+        <button id="predict-btn">Check URL</button>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing URL...</p>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('predict-btn').addEventListener('click', function() {
+            const url = document.getElementById('url').value.trim();
+            const errorElement = document.getElementById('error');
+            const resultElement = document.getElementById('result');
+            const loadingElement = document.getElementById('loading');
+            
+            // Reset
+            errorElement.style.display = 'none';
+            resultElement.style.display = 'none';
+            
+            if (!url) {
+                errorElement.textContent = 'Please enter a URL.';
+                errorElement.style.display = 'block';
+                return;
+            }
+            
+            // Show loading
+            loadingElement.style.display = 'block';
+            
+            // Send request to server
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `url=${encodeURIComponent(url)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingElement.style.display = 'none';
+                
+                if (data.error) {
+                    errorElement.textContent = data.error;
+                    errorElement.style.display = 'block';
+                    return;
+                }
+                
+                resultElement.textContent = data.result;
+                resultElement.className = 'result ' + data.class;
+                resultElement.style.display = 'block';
+            })
+            .catch(error => {
+                loadingElement.style.display = 'none';
+                errorElement.textContent = 'An error occurred. Please try again.';
+                errorElement.style.display = 'block';
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
